@@ -10,20 +10,9 @@ public class ConvierteDatos implements IConvierteDatos{
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public <T> T convert(String json, Class<T> tClass) {
+    public <T> T obtenerDatos(String json, Class<T> clase) {
         try {
-            return objectMapper.readValue(json, tClass);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public <T> List<T> convertList(String json, Class<T> tClass) {
-        CollectionType list = objectMapper.getTypeFactory()
-                .constructCollectionType(List.class, tClass);
-        try {
-            return objectMapper.readValue(json, list);
+            return objectMapper.readValue(json,clase);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

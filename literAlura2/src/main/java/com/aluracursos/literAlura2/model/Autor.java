@@ -1,7 +1,7 @@
 package com.aluracursos.literAlura2.model;
 
 import jakarta.persistence.*;
-import org.springframework.data.annotation.Id;
+//import org.springframework.data.annotation.Id;
 
 import java.util.List;
 

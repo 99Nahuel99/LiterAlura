@@ -1,33 +1,25 @@
 package com.aluracursos.literAlura2.principal;
 
-import com.aluracursos.literAlura2.model.Libro;
-import com.aluracursos.literAlura2.repository.AutorRepository;
+import com.aluracursos.literAlura2.model.*;
 import com.aluracursos.literAlura2.repository.LibroRepository;
-import com.aluracursos.literAlura2.service.ServiceLibro;
-
-import java.util.ArrayList;
+import com.aluracursos.literAlura2.service.ConsumoApi;
+import com.aluracursos.literAlura2.service.ConvierteDatos;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 
 public class Principal {
     private Scanner teclado =new Scanner(System.in);
-
-    private AutorRepository autorRepository;
     private LibroRepository libroRepository;
-    private ServiceLibro serviceLibro;
-    private List<String>posiblesIdiomas;
+    private List<Libro> libros;
+    private String URL_BASE = "https://gutendex.com/books/";
+    private ConsumoApi consumoAPI = new ConsumoApi();
+    private ConvierteDatos conversor = new ConvierteDatos();
 
-    public Principal(AutorRepository autorRepository,LibroRepository libroRepository,ServiceLibro serviceLibro){
-        this.autorRepository =autorRepository;
+    public Principal(LibroRepository libroRepository){
         this.libroRepository=libroRepository;
-        this.serviceLibro=serviceLibro;
-
-        posiblesIdiomas= new ArrayList<>();
-        posiblesIdiomas.add("pt");
-        posiblesIdiomas.add("es");
-        posiblesIdiomas.add("en");
-        posiblesIdiomas.add("fr");
     }
+
     public void muestaMenu(){
         var opcion=-1;
         while (opcion !=0){
@@ -74,17 +66,38 @@ public class Principal {
 
     private void busquedaDeLibroPorTitulo() {
         System.out.println("Escriba el nombre del titulo que desea buscar");
-        var titulo = teclado.nextLine();
-        var libroDatos =serviceLibro.busqueda( titulo.replace(" ", "+")).stream().findFirst();
-        if(libroDatos.isEmpty()){
-            System.out.println("Libro no encontrado");
+        var nombreTitulo =teclado.nextLine().toLowerCase();
+        var json = consumoAPI.obtenerDatos(URL_BASE + "?search=" + nombreTitulo.replace(" ", "%20").toLowerCase());
+        Resultado resultado = conversor.obtenerDatos(json,Resultado.class);
+        libros =libroRepository.findAll();
+        Optional<Libro> libro= libros.stream()
+                .filter(s->s.getTitulo().toLowerCase().contains(nombreTitulo.toLowerCase()))
+                .findFirst();
+        if (resultado.cantidadResultado()==0){
+            System.out.println("""
+                    ***********************************
+                    No se encontraron resultados
+                    ***********************************\n""");
+
+        }else if (libro.isPresent()){
+            System.out.println("""
+                    ***************************************
+                    El libro ya esta en la base de datos
+                    ***************************************\n""");
 
         }else {
-            var libro = Libro.datosLibro(libroDatos.get());
-            autorRepository.save(libro.getAutor());
-            libroRepository.save(libro);
+            DatosLibro datosLibro = resultado.libros().get(0);
+            DatosAutor datosAutor = datosLibro.autores().get(0);
+            Libro libroAGuardar = new Libro();
+            Autor autor = new Autor();
+            libroAGuardar.setAutor(autor);
+            libroRepository.save(libroAGuardar);
+            System.out.printf(datosLibro.titulo(),
+                    datosAutor.nombre(), datosLibro.idiomas(), datosLibro.cantDescargas());
 
         }
+
+
     }
 
     private void listarTodosLosLibros() {

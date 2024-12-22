@@ -7,18 +7,19 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class ConsumoApi {
-    public static String getData(String url) {
-        HttpClient httpClient = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest
-                .newBuilder()
-                .uri(URI.create(url))
+    public String obtenerDatos(String url){
+        java.net.http.HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
                 .build();
+        HttpResponse<String> response = null;
         try {
-            var response = httpClient
-                    .send(request, HttpResponse.BodyHandlers.ofString());
-            return response.body();
-        } catch (IOException | InterruptedException e) {
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        String json = response.body();
+        return json;
     }
 }
